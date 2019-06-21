@@ -1,4 +1,4 @@
-package com.nattguld.tasks;
+package com.nattguld.tasker;
 
 import java.util.Objects;
 

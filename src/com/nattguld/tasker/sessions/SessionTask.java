@@ -1,14 +1,14 @@
-package com.nattguld.tasks.sessions;
+package com.nattguld.tasker.sessions;
 
 import java.util.Objects;
 
-import com.nattguld.Session;
+import com.nattguld.http.Session;
 import com.nattguld.http.browser.Browser;
 import com.nattguld.http.proxies.ProxyManager;
 import com.nattguld.http.proxies.cfg.ProxyChoice;
 import com.nattguld.http.proxies.cfg.ProxyConfig;
+import com.nattguld.tasker.NetStepTask;
 import com.nattguld.tasker.steps.Step;
-import com.nattguld.tasks.NetStepTask;
 
 /**
  * 

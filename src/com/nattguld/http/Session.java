@@ -1,4 +1,4 @@
-package com.nattguld;
+package com.nattguld.http;
 
 import java.util.ArrayList;
 import java.util.List;
