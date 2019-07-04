@@ -2,6 +2,7 @@ package com.nattguld.http;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import com.google.gson.reflect.TypeToken;
 import com.nattguld.data.json.JsonReader;
@@ -22,7 +23,7 @@ public class Session extends JsonResource {
 	/**
 	 * The session id.
 	 */
-	private final int sessionId;
+	private final String uuid;
 	
 	/**
 	 * The browser to use.
@@ -55,7 +56,7 @@ public class Session extends JsonResource {
 	 * @param mobile Whether the session is on mobile or not.
 	 */
 	public Session(Browser browser) {
-		this.sessionId = hashCode();
+		this.uuid = String.valueOf(UUID.randomUUID());
 		this.browser = browser;
 		this.cookies = new ArrayList<>();
 	}
@@ -68,14 +69,14 @@ public class Session extends JsonResource {
 	public Session(JsonReader reader) {
 		super(reader);
 		
-		this.sessionId = getReader().getAsInt("session_id");
+		this.uuid = getReader().has("session_id") ? Integer.toString(getReader().getAsInt("session_id")) : getReader().getAsString("uuid");
 		this.browser = (Browser)getReader().getAsObject("browser", Browser.class);
 		this.cookies = getReader().getAsList("q_cookies", new TypeToken<List<Cookie>>() {}.getType(), new ArrayList<Cookie>());
 	}
 	
 	@Override
 	protected void write(JsonWriter writer) {
-		writer.write("session_id", sessionId);
+		writer.write("uuid", uuid);
 		writer.write("browser", browser);
 		writer.write("q_cookies", cookies);
 	}
@@ -87,16 +88,12 @@ public class Session extends JsonResource {
 
 	@Override
 	protected String getSaveFileName() {
-		return Integer.toString(sessionId);
+		return uuid;
 	}
 	
-	/**
-	 * Retrieves the session id.
-	 * 
-	 * @return The session id.
-	 */
-	public int getSessionId() {
-		return sessionId;
+	@Override
+	public String getUUID() {
+		return uuid;
 	}
 	
 	/**
