@@ -2,8 +2,10 @@ package com.nattguld.tasker.sessions;
 
 import java.util.Objects;
 
-import com.nattguld.http.Session;
+import com.nattguld.http.ISession;
 import com.nattguld.http.browser.Browser;
+import com.nattguld.http.cfg.ProxyPolicy;
+import com.nattguld.http.cfg.SessionConfig;
 import com.nattguld.http.proxies.ProxyManager;
 import com.nattguld.http.proxies.cfg.ProxyChoice;
 import com.nattguld.http.proxies.cfg.ProxyConfig;
@@ -16,7 +18,7 @@ import com.nattguld.tasker.steps.Step;
  *
  */
 
-public abstract class SessionTask<S extends Session> extends NetStepTask {
+public abstract class SessionTask<S extends ISession> extends NetStepTask {
 	
 	/**
 	 * The session instance.
@@ -26,7 +28,7 @@ public abstract class SessionTask<S extends Session> extends NetStepTask {
 	/**
 	 * The proxy choice.
 	 */
-	private final ProxyChoice proxyChoice;
+	private ProxyChoice proxyChoice;
 
 	
 	/**
@@ -41,21 +43,48 @@ public abstract class SessionTask<S extends Session> extends NetStepTask {
 	 * @param maxReAttempts The maximum allowed re-attempts on failed execute.
 	 */
 	public SessionTask(S session, ProxyChoice proxyChoice, String name) {
-		super(name, session.getProxy());
+		super(name, session.getSessionData().getProxy());
 		
 		this.session = session;
-		this.proxyChoice = getProxyChoice(proxyChoice);
+		
+		setProxyChoice(proxyChoice);
 	}
 	
 	@Override
 	protected boolean buildClient() {
+		if (Objects.isNull(session.getSessionData().getProxy())) {
+			if (SessionConfig.getConfig().getProxyPolicy() == ProxyPolicy.ASSIGNED_ONLY) {
+				System.err.println("No proxy assigned to session while proxy policy requires one.");
+				return false;
+			}
+			if (proxyChoice == ProxyChoice.DIRECT && SessionConfig.getConfig().getProxyPolicy() != ProxyPolicy.ANY
+					&& !ProxyConfig.getConfig().isCellularMode()) {
+				System.err.println("The current proxy policy does not allow a direct session connection.");
+				return false;
+			}
+			if (SessionConfig.getConfig().getProxyPolicy() == ProxyPolicy.ANY) {
+				proxyChoice = ProxyChoice.DIRECT;
+			}
+		}
 		boolean built = super.buildClient();
 		
 		if (!built) {
 			return false;
 		}
-		getClient().getCookieJar().importCookies(getSession().getCookies());
+		getClient().getCookieJar().importCookies(getSession().getSessionData().getCookies());
 		return true;
+	}
+	
+	/**
+	 * Modifies the proxy choice.
+	 * 
+	 * @param proxyChoice The new proxy choice.
+	 * 
+	 * @return The session.
+	 */
+	public SessionTask<S> setProxyChoice(ProxyChoice proxyChoice) {
+		this.proxyChoice = getProxyChoice(proxyChoice);
+		return this;
 	}
 	
 	/**
@@ -63,8 +92,8 @@ public abstract class SessionTask<S extends Session> extends NetStepTask {
 	 */
 	protected void disposeSession() {
 		if (Objects.nonNull(getClient())) {
-			session.getCookies().clear();
-			session.getCookies().addAll(getClient().getCookieJar().getCookies());
+			session.getSessionData().getCookies().clear();
+			session.getSessionData().getCookies().addAll(getClient().getCookieJar().getCookies());
 		}
 	}
 	
@@ -79,19 +108,21 @@ public abstract class SessionTask<S extends Session> extends NetStepTask {
 	protected void onStepFail(Step step) {
 		super.onStepFail(step);
 		
-		resetSession();
+		if (step.isCritical()) {
+			resetSession();
+		}
 	}
 	
 	/**
 	 * Resets the account session.
 	 */
 	protected void resetSession() {
-		getSession().getCookies().clear();
+		getSession().getSessionData().getCookies().clear();
 	}
 	
 	@Override
 	protected Browser getBrowser() {
-		return getSession().getBrowser();
+		return getSession().getSessionData().getBrowser();
 	}
 	
 	@Override
@@ -102,11 +133,20 @@ public abstract class SessionTask<S extends Session> extends NetStepTask {
 	}
 	
 	/**
+	 * Retrieves the proxy choice.
+	 * 
+	 * @return The proxy choice.
+	 */
+	public ProxyChoice getProxyChoice() {
+		return proxyChoice;
+	}
+	
+	/**
 	 * Retrieves the session.
 	 * 
 	 * @return The session.
 	 */
-	protected S getSession() {
+	public S getSession() {
 		return session;
 	}
 	

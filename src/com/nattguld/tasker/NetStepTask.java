@@ -31,6 +31,11 @@ public abstract class NetStepTask extends StepTask {
 	 */
 	private HttpClient c;
 	
+	/**
+	 * Whether an external client is assigned or not.
+	 */
+	private boolean externalClient;
+	
 
 	/**
 	 * Creates a new network flow.
@@ -77,7 +82,9 @@ public abstract class NetStepTask extends StepTask {
 	protected void onFinish() {
 		super.onFinish();
 		
-		disposeClient();
+		if (!externalClient) {
+			disposeClient();
+		}
 	}
 	
 	/**
@@ -92,8 +99,7 @@ public abstract class NetStepTask extends StepTask {
 		if (Objects.nonNull(getClient())) {
 			return true;
 		}
-		HttpProxy proxy = Objects.nonNull(getProxy()) ? getProxy()
-				: ProxyManager.getProxyByPreference(getProxyChoices(), getIdentifier(), isIgnoreUsers(), isIgnoreProxyCooldowns());
+		HttpProxy proxy = buildProxy();
 		
 		if (Objects.nonNull(getProxy()) && proxy == ProxyManager.INVALID_PROXY) {
 			System.err.println(getClass().getSimpleName() + ": Failed to get proxy to use");
@@ -117,9 +123,22 @@ public abstract class NetStepTask extends StepTask {
 	}
 	
 	/**
+	 * Retrieves the proxy to use.
+	 * 
+	 * @return The proxy.
+	 */
+	protected HttpProxy buildProxy() {
+		return Objects.nonNull(getProxy()) ? getProxy() 
+				: ProxyManager.getProxyByPreference(getProxyChoices(), getIdentifier(), isIgnoreUsers(), isIgnoreProxyCooldowns());
+	}
+	
+	/**
 	 * Disposes the client in use.
 	 */
 	protected void disposeClient(boolean rebuild) {
+		if (externalClient) {
+			return;
+		}
 		if (Objects.nonNull(c)) {
 			c.close();
 			setClient(null);
@@ -143,6 +162,17 @@ public abstract class NetStepTask extends StepTask {
 	 */
 	protected void setClient(HttpClient c) {
 		this.c = c;
+	}
+	
+	/**
+	 * Assigns an external client.
+	 * 
+	 * @param c The external client.
+	 */
+	public NetStepTask assignExternalClient(HttpClient c) {
+		this.c = c;
+		this.externalClient = true;
+		return this;
 	}
 	
 	/**
