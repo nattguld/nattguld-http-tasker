@@ -87,6 +87,15 @@ public abstract class NetStepTask extends StepTask {
 		}
 	}
 	
+	@Override
+	protected void onException(Step step, Exception ex) {
+		super.onException(step, ex);
+		
+		if (step.isCritical()) {
+			disposeClient();
+		}
+	}
+	
 	/**
 	 * Builds the client session.
 	 * 

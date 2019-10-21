@@ -36,6 +36,13 @@ public class SessionData {
 	
 	/**
 	 * Creates a new session.
+	 */
+	public SessionData() {
+		this(false);
+	}
+	
+	/**
+	 * Creates a new session.
 	 * 
 	 * @param mobile Whether the session is on mobile or not.
 	 */
@@ -114,6 +121,9 @@ public class SessionData {
 	 * @return The session.
 	 */
 	public SessionData addOrReplaceCookie(Cookie cookie) {
+		if (Objects.isNull(cookie)) {
+			return this;
+		}
 		Cookie exists = getCookieByName(cookie.getName());
 		
 		if (Objects.nonNull(exists)) {
@@ -167,6 +177,15 @@ public class SessionData {
 	 */
 	public HttpProxy getProxy() {
 		return proxy;
+	}
+	
+	/**
+	 * Retrieves whether the session has a proxy or not.
+	 * 
+	 * @return The result.
+	 */
+	public boolean hasProxy() {
+		return Objects.nonNull(getProxy());
 	}
 
 }

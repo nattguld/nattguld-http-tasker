@@ -4,6 +4,7 @@ import java.util.Objects;
 
 import com.nattguld.http.HttpClient;
 import com.nattguld.http.proxies.HttpProxy;
+import com.nattguld.http.proxies.cfg.ProxyChoice;
 
 /**
  * 
@@ -64,6 +65,13 @@ public abstract class NetBridgeStepTask extends NetStepTask {
 	@Override
 	public boolean keepAlive() {
 		return true;
+	}
+	
+	@Override
+	protected ProxyChoice[] getProxyChoices() {
+		return new ProxyChoice[] {
+				ProxyChoice.DIRECT
+		};
 	}
 	
 }
