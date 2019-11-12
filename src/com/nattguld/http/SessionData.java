@@ -9,6 +9,7 @@ import com.nattguld.data.json.JsonReader;
 import com.nattguld.http.browser.Browser;
 import com.nattguld.http.content.cookies.Cookie;
 import com.nattguld.http.proxies.HttpProxy;
+import com.nattguld.http.proxies.standard.StandardProxyManager;
 
 /**
  * 
@@ -29,9 +30,14 @@ public class SessionData {
 	private List<Cookie> cookies;
 	
 	/**
+	 * The proxy UUID.
+	 */
+	private String proxyUUID;
+	
+	/**
 	 * The proxy.
 	 */
-	private HttpProxy proxy;
+	private transient HttpProxy proxy;
 	
 	
 	/**
@@ -57,7 +63,7 @@ public class SessionData {
 	 */
 	public SessionData(Browser browser) {
 		this.browser = browser;
-		this.cookies = new ArrayList<>();
+		this.cookies = new ArrayList<Cookie>();
 	}
 	
 	/**
@@ -158,16 +164,26 @@ public class SessionData {
 		return cookies;
 	}
 	
+	
 	/**
-	 * Modifies the proxy.
+	 * Modifies the proxy UUID.
 	 * 
-	 * @param proxy The new proxy.
+	 * @param proxyUUID The new proxy UUID.
 	 * 
-	 * @return The session.
+	 * @return The session data.
 	 */
-	public SessionData setProxy(HttpProxy proxy) {
-		this.proxy = proxy;
+	public SessionData setProxyUUID(String proxyUUID) {
+		this.proxyUUID = proxyUUID;
 		return this;
+	}
+	
+	/**
+	 * Retrieves the proxy UUID.
+	 * 
+	 * @return The proxy UUID.
+	 */
+	public String getProxyUUID() {
+		return proxyUUID;
 	}
 	
 	/**
@@ -176,7 +192,10 @@ public class SessionData {
 	 * @return The proxy.
 	 */
 	public HttpProxy getProxy() {
-		return proxy;
+		if (!hasProxy()) {
+			return null;
+		}
+		return StandardProxyManager.getSingleton().getByUUID(getProxyUUID());
 	}
 	
 	/**
@@ -185,7 +204,7 @@ public class SessionData {
 	 * @return The result.
 	 */
 	public boolean hasProxy() {
-		return Objects.nonNull(getProxy());
+		return Objects.nonNull(getProxyUUID());
 	}
 
 }

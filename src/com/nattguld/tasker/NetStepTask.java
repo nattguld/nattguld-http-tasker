@@ -5,8 +5,10 @@ import java.util.Objects;
 import com.nattguld.http.ConnectionPolicy;
 import com.nattguld.http.HttpClient;
 import com.nattguld.http.browser.Browser;
+import com.nattguld.http.cfg.SessionConfig;
 import com.nattguld.http.proxies.HttpProxy;
 import com.nattguld.http.proxies.ProxyManager;
+import com.nattguld.http.proxies.ProxyState;
 import com.nattguld.http.proxies.cfg.ProxyChoice;
 import com.nattguld.http.proxies.cfg.ProxyConfig;
 import com.nattguld.tasker.steps.Step;
@@ -110,9 +112,27 @@ public abstract class NetStepTask extends StepTask {
 		}
 		HttpProxy proxy = buildProxy();
 		
-		if (Objects.nonNull(getProxy()) && proxy == ProxyManager.INVALID_PROXY) {
-			System.err.println(getClass().getSimpleName() + ": Failed to get proxy to use");
-			return false;
+		if (Objects.isNull(proxy)) {
+			if (Objects.nonNull(getProxy())) {
+				System.err.println(getClass().getName() + ": Failed to retrieve proxy to use (Max. connections reached)");
+				return false;
+			}
+			if (!hasProxyChoice(ProxyChoice.DIRECT)) {
+				System.err.println(getClass().getName() + ": Failed to retrieve proxy to use");
+				return false;
+			}
+		}
+		if (Objects.nonNull(proxy)) {
+			if (proxy == ProxyManager.INVALID_PROXY) {
+				System.err.println(getClass().getName() + ": Invalid proxy received");
+				return false;
+			}
+			if (!SessionConfig.getConfig().isAllowFlaggedProxies() 
+					&& (proxy.getState() == ProxyState.GHOSTED || proxy.getState() == ProxyState.BLACKLISTED)) {
+				System.err.println(getClass().getName() + ": Invalid proxy state (" + proxy.getState().getName() + ")");
+				onFlaggedProxy(proxy);
+				return false;
+			}
 		}
 		HttpClient c = new HttpClient(getBrowser(), proxy, getClientPolicies());
 		c.initProxies(getIdentifier());
@@ -120,7 +140,7 @@ public abstract class NetStepTask extends StepTask {
 		setClient(c);
 		
 		if (Objects.isNull(getClient())) {
-			System.err.println(getClass().getSimpleName() + " Failed to initialize client");
+			System.err.println(getClass().getName() + " Failed to initialize client");
 			return false;
 		}
 		if (ProxyConfig.getConfig().isFiddler()) {
@@ -132,13 +152,28 @@ public abstract class NetStepTask extends StepTask {
 	}
 	
 	/**
+	 * Handles what to do when a flagged proxy is encountered.
+	 * 
+	 * @param proxy The proxy.
+	 */
+	protected void onFlaggedProxy(HttpProxy proxy) {
+		//To override when required
+	}
+	
+	/**
 	 * Retrieves the proxy to use.
 	 * 
 	 * @return The proxy.
 	 */
 	protected HttpProxy buildProxy() {
-		return Objects.nonNull(getProxy()) ? getProxy() 
-				: ProxyManager.getProxyByPreference(getProxyChoices(), getIdentifier(), isIgnoreUsers(), isIgnoreProxyCooldowns());
+		if (Objects.nonNull(getProxy())) {
+			if (!getProxy().getLocalConfig().canAddUser(getIdentifier(), isUniqueProxyUser())) {
+				System.err.println(getClass().getName() + " Cant add user to proxy at this time");
+				return ProxyManager.INVALID_PROXY;
+			}
+			return getProxy();
+		}
+		return ProxyManager.getProxyByChoices(getProxyChoices(), getIdentifier(), isUniqueProxyUser());
 	}
 	
 	/**
@@ -203,21 +238,12 @@ public abstract class NetStepTask extends StepTask {
 	}
 	
 	/**
-	 * Whether to ignore proxy cooldowns or not.
-	 * 
-	 * @return The result.
-	 */
-	protected boolean isIgnoreProxyCooldowns() {
-		return true;
-	}
-	
-	/**
 	 * Whether to ignore users or not.
 	 * 
 	 * @return The result.
 	 */
-	protected boolean isIgnoreUsers() {
-		return true;
+	protected boolean isUniqueProxyUser() {
+		return false;
 	}
 	
 	/**
@@ -226,7 +252,7 @@ public abstract class NetStepTask extends StepTask {
 	 * @return The identifier.
 	 */
 	protected String getIdentifier() {
-		return getClass().getSimpleName();
+		return getClass().getName();
 	}
 
 	/**
@@ -244,6 +270,25 @@ public abstract class NetStepTask extends StepTask {
 	 * @return The proxy choices.
 	 */
 	protected abstract ProxyChoice[] getProxyChoices();
+	
+	/**
+	 * Retrieves whether a proxy choice is available or not.
+	 * 
+	 * @param proxyChoice The proxy choice.
+	 * 
+	 * @return The result.
+	 */
+	protected boolean hasProxyChoice(ProxyChoice proxyChoice) {
+		if (Objects.isNull(getProxyChoices())) {
+			return false;
+		}
+		for (ProxyChoice pc : getProxyChoices()) {
+			if (pc == proxyChoice) {
+				return true;
+			}
+		}
+		return false;
+	}
 	
 	/**
 	 * Retrieves the client properties.

@@ -52,7 +52,7 @@ public abstract class SessionTask<S extends ISession> extends NetStepTask {
 	
 	@Override
 	protected boolean buildClient() {
-		if (Objects.isNull(session.getSessionData().getProxy())) {
+		if (!session.getSessionData().hasProxy()) {
 			if (SessionConfig.getConfig().getProxyPolicy() == ProxyPolicy.ASSIGNED_ONLY) {
 				System.err.println("No proxy assigned to session while proxy policy requires one.");
 				return false;
@@ -148,6 +148,11 @@ public abstract class SessionTask<S extends ISession> extends NetStepTask {
 	 */
 	public S getSession() {
 		return session;
+	}
+	
+	@Override
+	protected boolean isUniqueProxyUser() {
+		return true;
 	}
 	
 	/**

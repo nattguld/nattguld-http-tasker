@@ -18,6 +18,11 @@ public class SessionConfig extends Config {
 	 */
 	private ProxyPolicy proxyPolicy = ProxyPolicy.ASSIGNED_ONLY;
 	
+	/**
+	 * Whether to allow flagged proxies or not.
+	 */
+	private boolean allowFlaggedProxies;
+	
 	
 	@Override
 	protected String getSaveFileName() {
@@ -27,11 +32,34 @@ public class SessionConfig extends Config {
 	@Override
 	protected void read(JsonReader reader) {
 		this.proxyPolicy = (ProxyPolicy)reader.getAsObject("proxy_policy", ProxyPolicy.class, ProxyPolicy.ASSIGNED_ONLY);
+		this.allowFlaggedProxies = reader.getAsBoolean("allow_flagged_proxies", false);
 	}
 
 	@Override
 	protected void write(JsonWriter writer) {
 		writer.write("proxy_policy", proxyPolicy);
+		writer.write("allow_flagged_proxies", allowFlaggedProxies);
+	}
+	
+	/**
+	 * Modifies whether to allow flagged proxies or not.
+	 * 
+	 * @param allowFlaggedProxies The new state.
+	 * 
+	 * @return The config.
+	 */
+	public SessionConfig setAllowFlaggedProxies(boolean allowFlaggedProxies) {
+		this.allowFlaggedProxies = allowFlaggedProxies;
+		return this;
+	}
+	
+	/**
+	 * Retrieves whether to allow flagged proxies or not.
+	 * 
+	 * @return The result.
+	 */
+	public boolean isAllowFlaggedProxies() {
+		return allowFlaggedProxies;
 	}
 	
 	/**
