@@ -166,7 +166,7 @@ public abstract class NetStepTask extends StepTask {
 	 * @return The proxy.
 	 */
 	protected HttpProxy buildProxy() {
-		if (Objects.nonNull(getProxy())) {
+		if (Objects.nonNull(getProxy()) && getProxy() != ProxyManager.INVALID_PROXY && getProxy() != ProxyManager.LOCALHOST) {
 			if (!getProxy().getLocalConfig().canAddUser(getIdentifier(), isUniqueProxyUser())) {
 				System.err.println(getClass().getName() + " Cant add user to proxy at this time");
 				return ProxyManager.INVALID_PROXY;

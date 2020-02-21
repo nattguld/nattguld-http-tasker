@@ -35,6 +35,11 @@ public class SessionData {
 	private String proxyUUID;
 	
 	/**
+	 * The last referer.
+	 */
+	private String lastReferer;
+	
+	/**
 	 * The proxy.
 	 */
 	private transient HttpProxy proxy;
@@ -95,7 +100,7 @@ public class SessionData {
 	 * 
 	 * @return The session.
 	 */
-	protected SessionData setBrowser(Browser browser) {
+	public SessionData setBrowser(Browser browser) {
 		this.browser = browser;
 		return this;
 	}
@@ -205,6 +210,27 @@ public class SessionData {
 	 */
 	public boolean hasProxy() {
 		return Objects.nonNull(getProxyUUID());
+	}
+	
+	/**
+	 * Modifies the last referer.
+	 * 
+	 * @param lastReferer The new last referer.
+	 * 
+	 * @return The session data.
+	 */
+	public SessionData setLastReferer(String lastReferer) {
+		this.lastReferer = lastReferer;
+		return this;
+	}
+	
+	/**
+	 * Retrieves the last referer.
+	 * 
+	 * @return The last referer.
+	 */
+	public String getLastReferer() {
+		return lastReferer;
 	}
 
 }

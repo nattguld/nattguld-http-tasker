@@ -72,6 +72,7 @@ public abstract class SessionTask<S extends ISession> extends NetStepTask {
 			return false;
 		}
 		getClient().getCookieJar().importCookies(getSession().getSessionData().getCookies());
+		getClient().getRequestExecutor().setLastReferer(getSession().getSessionData().getLastReferer());
 		return true;
 	}
 	
@@ -94,6 +95,7 @@ public abstract class SessionTask<S extends ISession> extends NetStepTask {
 		if (Objects.nonNull(getClient())) {
 			session.getSessionData().getCookies().clear();
 			session.getSessionData().getCookies().addAll(getClient().getCookieJar().getCookies());
+			session.getSessionData().setLastReferer(getClient().getRequestExecutor().getLastReferer());
 		}
 	}
 	
@@ -118,6 +120,7 @@ public abstract class SessionTask<S extends ISession> extends NetStepTask {
 	 */
 	protected void resetSession() {
 		getSession().getSessionData().getCookies().clear();
+		getSession().getSessionData().setLastReferer(null);
 	}
 	
 	@Override
